@@ -127,6 +127,7 @@ def test1():
     if expected != actual:
         fail("test 1 failed")
 
+
 def test2():
     lexer = build_lexer()
     data = '''
@@ -143,6 +144,7 @@ write 1.2e+4
     actual = print_tokens(gen_tokens(lexer), data)
     if expected != actual:
         fail("test 2 failed")
+
 
 def test3():
     lexer = build_lexer()
@@ -179,6 +181,44 @@ end
     if expected != actual:
         fail("test 3 failed")
 
+
+def test4():
+    lexer = build_lexer()
+    data = '''
+false
+    i == 0 write;
+    do
+        i == i + 159000;
+    begin (_i_FGH != 10);
+end
+'''
+    expected = ["FALSE:".ljust(12) + "1 0-4",
+                "VAR:".ljust(12) + "2 4-4, \"i\"",
+                "EQ:".ljust(12) + "2 6-7",
+                "NUM:".ljust(12) + "2 9-9, \"0\"",
+                "WRITE:".ljust(12) + "2 11-15",
+                "SEMICOLON:".ljust(12) + "2 16-16",
+                "DO:".ljust(12) + "3 4-5",
+                "VAR:".ljust(12) + "4 8-8, \"i\"",
+                "EQ:".ljust(12) + "4 10-11",
+                "VAR:".ljust(12) + "4 13-13, \"i\"",
+                "PLUS:".ljust(12) + "4 15-15",
+                "NUM:".ljust(12) + "4 17-22, \"159000\"",
+                "SEMICOLON:".ljust(12) + "4 23-23",
+                "BEGIN:".ljust(12) + "5 4-8",
+                "LBRACKET:".ljust(12) + "5 10-10",
+                "VAR:".ljust(12) + "5 11-16, \"_i_FGH\"",
+                "NEQ:".ljust(12) + "5 18-19",
+                "NUM:".ljust(12) + "5 21-22, \"10\"",
+                "RBRACKET:".ljust(12) + "5 23-23",
+                "SEMICOLON:".ljust(12) + "5 24-24",
+                "END:".ljust(12) + "6 0-2"] 
+    lexer.input(data)
+    actual = print_tokens(gen_tokens(lexer), data)
+    if expected != actual:
+        fail("test 4 failed")
+
+
 from argparse import ArgumentParser
 
 def main():
@@ -198,5 +238,6 @@ if __name__ == '__main__':
     test1()
     test2()
     test3()
+    test4()
     main()
 

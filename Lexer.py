@@ -20,7 +20,8 @@ def build_lexer():
         'SEMICOLON',
         'LBRACKET', 'RBRACKET',
         'VAR',
-        'NUM'
+        'NUM',
+        'COMMENT'
     )
 
     reserved = {
@@ -58,9 +59,9 @@ def build_lexer():
     t_RBRACKET = r'\)';
 
 
-    t_NUM = r'-?[1-9][0-9]*(\.[0-9]*[1-9])?(e(\+|-)[0-9]*[1-9])?|-?0?\.[0-9]*[1-9](e(\+|-)[0-9]*[1-9])?|0'
+    t_NUM = r'-?[1-9][0-9]*(\.([0-9]*[1-9]|0))?(e(\+|-)[0-9]*[1-9])?|-?0?\.[0-9]*[1-9](e(\+|-)[0-9]*[1-9])?|0'
 
-
+    t_COMMENT = r'[ \t]*\/\/[^\r\n\f]*'
 
     def t_VAR(t):
         r'[a-zA-Z_][a-zA-Z_0-9]*'
@@ -75,7 +76,7 @@ def build_lexer():
 
 
     def t_error(t):
-        print("Illegal character '%s'" % t.value[0])
+        print("Illegal character {} at line {}".format(t.value[0], t.lineno - 1))
         t.lexer.skip(1)
 
     lexer = lex.lex(reflags=re.UNICODE | re.DOTALL)
@@ -105,7 +106,7 @@ def print_tokens(tokens_it, data):
         lines.append(''.join([(t.type + ':').ljust(12),  
                      str(t.lineno - 1), ' ', 
                      str(col) + '-' + str(col + len(t.value) - 1),
-                     ', \"' + t.value + '\"' if t.type in ('VAR', 'NUM') else '']))
+                     ', \"' + t.value + '\"' if t.type in ('VAR', 'NUM', 'COMMENT') else '']))
     return lines
 
 
@@ -226,9 +227,11 @@ def main():
     parser.add_argument('-i', '--input', help='path to the input file')
     args = parser.parse_args()
 
+    # with open(args.input) as inp:
+    #     data = [st.strip().split('//')[0] for st in inp]
+    # data = '\n'.join(data)
     with open(args.input) as inp:
-        data = [st.strip().split('//')[0] for st in inp]
-    data = '\n'.join(data)
+        data = ''.join([st for st in inp])
     lexer = build_lexer()
     lexer.input(data)
     print('\n'.join(print_tokens(gen_tokens(lexer), data)))

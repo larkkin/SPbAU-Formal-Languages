@@ -6,6 +6,8 @@ import lex
 import re
 
 
+
+
 def build_lexer():
     tokens = (
         'IF', 'THEN', 'ELSE', 
@@ -73,10 +75,16 @@ def build_lexer():
     def t_newline(t):
         r'\n+'
         t.lexer.lineno += len(t.value)
+        t.lexer.last_line_start_position = t.lexpos
 
 
     def t_error(t):
-        print("Illegal character {} at line {}".format(t.value[0], t.lineno - 1))
+        try:
+            line_start_pos = t.lexer.last_line_start_position
+        except AttributeError:
+            line_start_pos = 0
+
+        print("Illegal character {} at {} {}".format(t.value[0], t.lineno - 1, t.lexpos - line_start_pos - 1))
         t.lexer.skip(1)
 
     lexer = lex.lex(reflags=re.UNICODE | re.DOTALL)

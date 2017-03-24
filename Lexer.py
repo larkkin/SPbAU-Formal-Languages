@@ -82,7 +82,7 @@ def build_lexer():
         try:
             line_start_pos = t.lexer.last_line_start_position
         except AttributeError:
-            line_start_pos = 0
+            line_start_pos = -1
 
         print("Illegal character {} at {} {}".format(t.value[0], t.lineno - 1, t.lexpos - line_start_pos - 1))
         t.lexer.skip(1)

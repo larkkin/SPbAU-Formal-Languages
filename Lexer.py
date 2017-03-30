@@ -9,12 +9,18 @@ import re
 
 
 def build_lexer():
+
+    states = (
+       ('mlcomment','exclusive'),
+              
+    )
+
     tokens = (
         'IF', 'THEN', 'ELSE', 
         'WHILE', 'DO', 
         'READ', 'WRITE',
         'BEGIN', 'END',
-        'PLUS', 'MINUS', 'MULT', 'DIV', 'MOD',
+        'PLUS', 'MINUS', 'MULT', 'DIV', 'MOD', 'POW',
         'EQ', 'NEQ',
         'GT', 'GE', 'LT', 'LE', 
         'AND', 'OR',
@@ -23,7 +29,9 @@ def build_lexer():
         'LBRACKET', 'RBRACKET',
         'VAR',
         'NUM',
-        'COMMENT'
+        'COMMENT',
+        'MLBODY',
+        'ASSIGN'
     )
 
     reserved = {
@@ -46,6 +54,7 @@ def build_lexer():
     t_MULT  = r'\*';
     t_DIV   = r'/';
     t_MOD   = r'%';
+    t_POW   = r'\*\*';
     t_EQ  = r'==';
     t_NEQ = r'!=';
     t_GT  = r'>';
@@ -54,6 +63,7 @@ def build_lexer():
     t_LE  = r'<=';
     t_AND = r'&&';
     t_OR  = r'\|\|';
+    t_ASSIGN  = r':=';
 
 
     t_SEMICOLON = r';';
@@ -78,7 +88,7 @@ def build_lexer():
         t.lexer.last_line_start_position = t.lexpos
 
 
-    def t_error(t):
+    def t_ANY_error(t):
         try:
             line_start_pos = t.lexer.last_line_start_position
         except AttributeError:
@@ -86,6 +96,29 @@ def build_lexer():
 
         print("Illegal character {} at {} {}".format(t.value[0], t.lineno - 1, t.lexpos - line_start_pos - 1))
         t.lexer.skip(1)
+
+
+    # for state MLCOMMENT
+    def t_mlcomment_MLBODY(t): 
+        r'(\**[^\*\/]+\/*)+'
+        num_newlines = t.value.count('\n')
+        t.lexer.lineno += num_newlines
+        t.lexer.last_line_start_position = t.value.rfind('\n')
+        return t
+        
+
+    t_mlcomment_ignore = '\r\f'
+
+    def t_begin_mlcomment(t): 
+        r'\/\*'
+        t.lexer.begin('mlcomment')
+
+    def t_mlcomment_end(t):
+        r'\*\/'
+        t.lexer.begin('INITIAL')  
+
+
+
 
     lexer = lex.lex(reflags=re.UNICODE | re.DOTALL)
 
@@ -107,14 +140,29 @@ def gen_tokens(lexer):
         yield tok
         tok = lexer.token()     
 
-def print_tokens(tokens_it, data):
+def print_tokens(tokens_it, data, should_filter=False):
     lines = []
     for t in tokens_it:
+        if should_filter and t.type in ('COMMENT', 'MLBODY'):
+            continue
         col = find_column(data, t)
-        lines.append(''.join([(t.type + ':').ljust(12),  
-                     str(t.lineno - 1), ' ', 
-                     str(col) + '-' + str(col + len(t.value) - 1),
-                     ', \"' + t.value + '\"' if t.type in ('VAR', 'NUM', 'COMMENT') else '']))
+        if t.type != 'MLBODY': 
+            lines.append(''.join([(t.type + ':').ljust(12),  
+                         str(t.lineno - 1), ' ', 
+                         str(col) + '-' + str(col + len(t.value) - 1),
+                         ',{}\"'.format(' ') + t.value +\
+                         '\"' if t.type in ('VAR', 'NUM', 'COMMENT') else '']))
+        else:
+            num_newlines = t.value.count('\n')
+            if num_newlines != 0:
+                lastlinepos = len(t.value) - 1 - t.value.rfind('\n')
+            else:
+                lastlinepos = col + len(t.value) - 1
+            lines.append(''.join([(t.type + ':').ljust(12),  
+                     str(t.lineno - 1) + ':' + str(col), ' - ',
+                     str(t.lineno - 1 + num_newlines) + ':' +\
+                        str(lastlinepos),
+                     ',{}\"'.format('\n') + t.value + '\"']))
     return lines
 
 
@@ -228,11 +276,50 @@ end
         fail("test 4 failed")
 
 
+def test5():
+    lexer = build_lexer()
+    data = '''read x; 
+/*if y + 1.24e+5 == x 
+this is
+a multiline
+comment with stars * ,  
+double stars ** , slashes / and
+even mlstart /* in it */
+then 
+x := 2 ** 0.5 * 4 /* the end */
+'''
+    expected = ["READ:".ljust(12) + "0 0-3",
+                "VAR:".ljust(12) + "0 5-5, \"x\"",
+                "SEMICOLON:".ljust(12) + "0 6-6",
+                "MLBODY:".ljust(12) + "1:2 - 6:22," + '''
+\"if y + 1.24e+5 == x 
+this is
+a multiline
+comment with stars * ,  
+double stars ** , slashes / and
+even mlstart /* in it \"''',
+                "THEN:".ljust(12) + "7 0-3",
+                "VAR:".ljust(12) + "8 0-0, \"x\"",
+                "ASSIGN:".ljust(12) + "8 2-3",
+                "NUM:".ljust(12) + "8 5-5, \"2\"",
+                "POW:".ljust(12) + "8 7-8",
+                "NUM:".ljust(12) + "8 10-12, \"0.5\"",
+                "MULT:".ljust(12) + "8 14-14",
+                "NUM:".ljust(12) + "8 16-16, \"4\"",
+                "MLBODY:".ljust(12) + "8:20 - 8:28," + '''
+\" the end \"''',] 
+    lexer.input(data)
+    actual = print_tokens(gen_tokens(lexer), data)
+    if expected != actual:
+        fail("test 5 failed")
+
+
 from argparse import ArgumentParser
 
 def main():
     parser = ArgumentParser()
     parser.add_argument('-i', '--input', help='path to the input file')
+    parser.add_argument('-f', '--filter', action='store_true', help='filter the commentaries')
     args = parser.parse_args()
 
     # with open(args.input) as inp:
@@ -242,7 +329,7 @@ def main():
         data = ''.join([st for st in inp])
     lexer = build_lexer()
     lexer.input(data)
-    print('\n'.join(print_tokens(gen_tokens(lexer), data)))
+    print('\n'.join(print_tokens(gen_tokens(lexer), data, args.filter)))
 
 
 if __name__ == '__main__':
@@ -250,5 +337,6 @@ if __name__ == '__main__':
     test2()
     test3()
     test4()
+    test5()
     main()
 

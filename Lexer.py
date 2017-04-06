@@ -100,7 +100,7 @@ def build_lexer():
 
     # for state MLCOMMENT
     def t_mlcomment_MLBODY(t): 
-        r'(\**[^\*\/]+\/*)+'
+        r'(\**[^\*\)]+\/*)+'
         num_newlines = t.value.count('\n')
         t.lexer.lineno += num_newlines
         t.lexer.last_line_start_position = t.value.rfind('\n')
@@ -110,11 +110,11 @@ def build_lexer():
     t_mlcomment_ignore = '\r\f'
 
     def t_begin_mlcomment(t): 
-        r'\/\*'
+        r'\(\*'
         t.lexer.begin('mlcomment')
 
     def t_mlcomment_end(t):
-        r'\*\/'
+        r'\*\)'
         t.lexer.begin('INITIAL')  
 
 
@@ -279,14 +279,14 @@ end
 def test5():
     lexer = build_lexer()
     data = '''read x; 
-/*if y + 1.24e+5 == x 
+(*if y + 1.24e+5 == x 
 this is
 a multiline
 comment with stars * ,  
-double stars ** , slashes / and
-even mlstart /* in it */
+double stars ** , slashes // and
+even mlstart (* in it *)
 then 
-x := 2 ** 0.5 * 4 /* the end */
+x := 2 ** 0.5 * 4 (* the end *)
 '''
     expected = ["READ:".ljust(12) + "0 0-3",
                 "VAR:".ljust(12) + "0 5-5, \"x\"",
@@ -296,8 +296,8 @@ x := 2 ** 0.5 * 4 /* the end */
 this is
 a multiline
 comment with stars * ,  
-double stars ** , slashes / and
-even mlstart /* in it \"''',
+double stars ** , slashes // and
+even mlstart (* in it \"''',
                 "THEN:".ljust(12) + "7 0-3",
                 "VAR:".ljust(12) + "8 0-0, \"x\"",
                 "ASSIGN:".ljust(12) + "8 2-3",
@@ -311,6 +311,10 @@ even mlstart /* in it \"''',
     lexer.input(data)
     actual = print_tokens(gen_tokens(lexer), data)
     if expected != actual:
+        for i in range(len(actual)):
+            if actual[i] != expected[i]:
+                print actual[i]
+                print expected[i]
         fail("test 5 failed")
 
 

@@ -72,7 +72,7 @@ def build_lexer():
     t_LBRACKET = r'\(';
     t_RBRACKET = r'\)';
 
-    t_NUM = r'-?[1-9][0-9]*(\.([0-9]*[1-9]|0))?(e(\+|-)[0-9]*[1-9])?|-?0?\.[0-9]*[1-9](e(\+|-)[0-9]*[1-9])?|0'
+    t_NUM = r'(-?[1-9]([0-9_]*[0-9])?(\.(([0-9][0-9_]*)?[1-9]|0)?)?(e(\+|-)?[0-9]*[1-9])?|-?0?\.([0-9][0-9_]*)?[1-9](e(\+|-)?[0-9]*[1-9])?|0)[fFdD]?'
 
     t_COMMENT = r'[ \t]*\/\/[^\r\n\f]*'
 
@@ -287,7 +287,7 @@ comment with stars * ,
 double stars ** , slashes // and
 even mlstart (* in it *)
 then 
-x := 2 ** 0.5 * 4 (* the end *)
+x := 2 ** 0.5 * 1_2_6.022_137e+23f (* the end *)
 '''
     expected = ["READ:".ljust(12) + "0 0-3",
                 "VAR:".ljust(12) + "0 5-5, \"x\"",
@@ -306,8 +306,8 @@ even mlstart (* in it \"''',
                 "POW:".ljust(12) + "8 7-8",
                 "NUM:".ljust(12) + "8 10-12, \"0.5\"",
                 "MULT:".ljust(12) + "8 14-14",
-                "NUM:".ljust(12) + "8 16-16, \"4\"",
-                "MLBODY:".ljust(12) + "8:20 - 8:28," + '''
+                "NUM:".ljust(12) + "8 16-33, \"1_2_6.022_137e+23f\"",
+                "MLBODY:".ljust(12) + "8:37 - 8:45," + '''
 \" the end \"''',] 
     lexer.input(data)
     actual = print_tokens(gen_tokens(lexer), data)
@@ -317,6 +317,25 @@ even mlstart (* in it \"''',
                 print actual[i]
                 print expected[i]
         fail("test 5 failed")
+
+
+def testJavaNumbers():
+    lexer = build_lexer()
+    data = '''1e1f  2.f   .3f  0f  3.14_159__26D   1_2_6.022_137e+23f   1e-9d'''
+    expected = ["NUM:".ljust(12) + "0 0-3, \"1e1f\"", 
+                "NUM:".ljust(12) + "0 6-8, \"2.f\"",
+                "NUM:".ljust(12) + "0 12-14, \".3f\"",
+                "NUM:".ljust(12) + "0 17-18, \"0f\"",
+                "NUM:".ljust(12) + "0 21-33, \"3.14_159__26D\"",
+                "NUM:".ljust(12) + "0 37-54, \"1_2_6.022_137e+23f\"",
+                "NUM:".ljust(12) + "0 58-62, \"1e-9d\""]
+    
+    lexer.input(data)
+    actual = print_tokens(gen_tokens(lexer), data)
+
+    if expected != actual:
+        fail("JavaNumbers test failed")
+
 
 
 from argparse import ArgumentParser
@@ -343,5 +362,6 @@ if __name__ == '__main__':
     test3()
     test4()
     test5()
+    testJavaNumbers()
     main()
 

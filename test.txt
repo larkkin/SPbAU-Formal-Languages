@@ -6,4 +6,4 @@ comment with stars * ,
 double stars ** , slashes // and
 even mlstart (* in it *)
 then 
-x := 2 ** 0.5 * 4 (* the end *)
+x := 2 ** 0.5 * 1_2_6.022_137e+23f (* the end *)

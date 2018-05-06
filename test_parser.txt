@@ -1,0 +1,12 @@
+log(x, e) <- begin x - x ** 2 / 2 + x ** 3 / 3 end; 
+if (false) 
+then begin 
+	f(x); 
+    while (1) do begin 
+        read(y); x := (2 + (1 + x) * y); skip; write(x + y) 
+    end 
+end 
+else begin 
+    write(2)
+end;
+end_program := true

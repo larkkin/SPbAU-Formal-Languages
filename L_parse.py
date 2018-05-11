@@ -201,7 +201,7 @@ def parser_test1(parser):
     actual = '\n'.join(actual_lines)
     if expected != actual:
         fail("test 1 failed") 
-
+    top_program[0] = ''
 
 def parser_test2(parser):
     # parser = yacc.yacc()
@@ -238,6 +238,7 @@ end
     actual = '\n'.join(actual_lines)
     if expected != actual:
         fail("test 2 failed")
+    top_program[0] = ''
 
 def parser_test3(parser):
     # parser = yacc.yacc()
@@ -307,6 +308,7 @@ end
     actual = '\n'.join(actual_lines)
     if expected != actual:
         fail("test 3 failed")
+    top_program[0] = ''
 
 
 
@@ -316,6 +318,7 @@ def main():
     parser_test1(parser)
     parser_test2(parser)
     parser_test3(parser)
+    top_program[0] = ''
     argparser = ArgumentParser()
     argparser.add_argument("-i", "--input", help="input file with L program to parse", required=True)
     args = argparser.parse_args()

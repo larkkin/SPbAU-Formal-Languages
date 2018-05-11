@@ -3,7 +3,7 @@ if (false)
 then begin 
 	f(x); 
     while (1) do begin 
-        read(y); x := (2 + (1 + x) * y); skip; write(x + y) 
+        read(y); x := -1 + x * 2 ** 10
     end 
 end 
 else begin 

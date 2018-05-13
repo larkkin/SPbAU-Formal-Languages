@@ -7,14 +7,15 @@ import re
 
 
 tokens = (
-    'IF', 'THEN', 'ELSE', 
+    'IF', 'UNLESS', 'THEN', 'ELSE', 
     'WHILE', 'DO', 
     'READ', 'WRITE',
     'BEGIN', 'END',
     'PLUS', 'MINUS', 'MULT', 'DIV', 'MOD', 'POW',
+    'PLUSASSIGN', 'MINUSASSIGN', 'MULTASSIGN', 'DIVASSIGN', 'MODASSIGN', 'POWASSIGN',
     'EQ', 'NEQ',
     'GT', 'GE', 'LT', 'LE', 
-    'AND', 'OR',
+    'AND', 'OR', 'NOT',
     'TRUE', 'FALSE',
     'SEMICOLON',
     'COMMA',
@@ -41,6 +42,7 @@ def build_lexer():
 
     reserved = {
         r'if' : 'IF',
+        r'unless' : 'UNLESS',
         r'then' : 'THEN',
         r'else' : 'ELSE',
         r'true' : 'TRUE',
@@ -62,6 +64,12 @@ def build_lexer():
     t_DIV   = r'/';
     t_MOD   = r'%';
     t_POW   = r'\*\*';
+    t_PLUSASSIGN  = r'\+=';
+    t_MINUSASSIGN = r'-=';
+    t_MULTASSIGN  = r'\*=';
+    t_DIVASSIGN   = r'/=';
+    t_MODASSIGN   = r'%=';
+    t_POWASSIGN   = r'\*\*=';
     t_EQ  = r'==';
     t_NEQ = r'!=';
     t_GT  = r'>';
@@ -70,6 +78,7 @@ def build_lexer():
     t_LE  = r'<=';
     t_AND = r'&&';
     t_OR  = r'\|\|';
+    t_NOT  = r'!';
     t_ASSIGN  = r':=';
     t_FUNASSIGN = r'<-'
 

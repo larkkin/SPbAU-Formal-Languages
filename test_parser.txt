@@ -1,12 +1,8 @@
-log(x, e) <- begin x - x ** 2 / 2 + x ** 3 / 3 end; 
-if (false) 
-then begin 
-	f(x); 
-    while (1) do begin 
-        read(y); x := -1 + x * 2 ** 10
-    end 
-end 
-else begin 
-    write(2)
-end;
-end_program := true
+a := 2;
+b := a + 1;
+a **= b;
+b += a;
+a *= b;
+b -= (a / 2);
+a /= 2 * b;
+unless (a > 2) then begin b **= a end else begin skip end

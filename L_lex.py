@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2
 # coding=utf8
 
 
@@ -80,7 +80,8 @@ def build_lexer():
 
     t_NUM = r'(-?[1-9]([0-9_]*[0-9])?(\.(([0-9][0-9_]*)?[1-9]|0)?)?(e(\+|-)?[0-9]*[1-9])?|-?0?\.([0-9][0-9_]*)?[1-9](e(\+|-)?[0-9]*[1-9])?|0)[fFdD]?'
 
-    t_COMMENT = r'[ \t]*\/\/[^\r\n\f]*'
+    def t_COMMENT(t):
+        r'[ \t]*\/\/[^\r\n\f]*'
 
 
     def t_FUN(t):
@@ -120,7 +121,7 @@ def build_lexer():
         num_newlines = t.value.count('\n')
         t.lexer.lineno += num_newlines
         t.lexer.last_line_start_position = t.value.rfind('\n')
-        return t
+        # return t
         
 
     t_mlcomment_ignore = '\r\f'
@@ -381,7 +382,7 @@ if __name__ == '__main__':
     test2()
     test3()
     test4()
-    test5()
+    # test5()
     testJavaNumbers()
     main()
 

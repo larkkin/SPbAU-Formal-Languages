@@ -18,11 +18,12 @@ precedence = (
 parser = ''
 top_statement = ['']
 top_program = ['']
- 
+
 def p_program(p):
     '''program : definition SEMICOLON program
-               | programbody'''
-    p[0] = {'program' : (p[1], p[3]) if len(p) > 2 else p[1]}
+               | programbody 
+               |'''
+    p[0] = {'program' : (p[1], p[3]) if len(p) > 2 else (p[1] if len(p) == 2 else '')}
     top_program[0] = p[0] 
 def p_programbody(p):
     '''programbody : statement SEMICOLON programbody
@@ -42,8 +43,9 @@ def p_functioncall(p):
     p[0] = {'function call' : (p[1][:-1], p[2])}
 def p_functionargs(p):
     '''functionargs : VAR
-                    | VAR COMMA functionargs'''
-    p[0] = {'function arguments' : p[1] if len(p) < 3 else (p[1], p[3])}
+                    | VAR COMMA functionargs
+                    |'''
+    p[0] = {'function arguments' : '' if len(p) < 2 else (p[1] if len(p) < 3 else (p[1], p[3]))}
 
 def p_statement_skip(p):
     '''statement : SKIP'''
@@ -151,6 +153,7 @@ def p_expression_brackets(p):
 
 def p_error(p):
     print("Syntax error in input!", p)
+    raise Exception
 
 
 def get_string_program(lines,program, prefix=''):
@@ -326,7 +329,11 @@ def main():
     with open(args.input) as inp:
         data = ''.join(inp)
     lexer = build_lexer()
-    parser.parse(input=data, lexer=lexer)
+    try:
+	    parser.parse(input=data, lexer=lexer)
+    except Exception:
+    	print "parsing terminated"
+    	return
     print_program(top_program[0])
 
 

@@ -9,7 +9,7 @@ import yacc
 precedence = (
     ('left', 'OR'), 
     ('left', 'AND'), 
-    ('nonassoc', 'NOT'), 
+    # ('nonassoc', 'NOT'), 
     ('nonassoc', 'EQ', 'NEQ'),  # Nonassociative operators
     ('nonassoc', 'LE', 'GE', 'GT'),  # Nonassociative operators
     ('left', 'PLUS', 'MINUS'),
@@ -37,11 +37,21 @@ def p_definition(p):
                   | functioncall FUNASSIGN BEGIN programbody RETURN expression END
                   | functioncall FUNASSIGN BEGIN expression END
                   | functioncall FUNASSIGN BEGIN RETURN expression END'''
-    p[0] = {'function definition' : (p[1], p[4])}
+    if len(p) == 6:
+        p[0] = {'function definition' : (p[1], p[4])}
+    elif len(p) == 7:
+        p[0] = {'function definition' : (p[1], p[5])}
+    elif len(p) == 8:
+        p[0] = {'function definition' : (p[1], p[4], p[5], p[6])}
+
     top_statement[0] = p[0]
 def p_functioncall(p):
-    '''functioncall : FUN functionargs RBRACKET'''
-    p[0] = {'function call' : (p[1][:-1], p[2])}
+    '''functioncall : FUN functionargs RBRACKET
+                    | VAR LBRACKET functionargs RBRACKET'''
+    if len(p) == 4:
+        p[0] = {'function call' : (p[1][:-1], p[2])}
+    elif len(p) == 5:
+        p[0] = {'function call' : (p[1], p[3])}
 def p_functionargs(p):
     '''functionargs : VAR
                     | VAR COMMA functionargs
@@ -65,24 +75,35 @@ def p_statement_functioncall(p):
 #     p[0] = (p[1], p[3])
 #     top_statement[0] = p[0]
 def p_statement_write(p):
-    '''statement : WRITE expression RBRACKET'''
-    p[0] = {'write statement' : p[2]}
+    '''statement : WRITEBR expression RBRACKET
+                 | WRITE LBRACKET expression RBRACKET'''
+    if len(p) == 4:
+        p[0] = {'write statement' : p[2]}
+    elif len(p) == 5:
+        p[0] = {'write statement' : p[3]}
     top_statement[0] = p[0]
+def p_statement_writeassign(p):
+    '''statement : VAR WRITEASSIGN expression'''
+    p[0] = ({'assignment' : (p[1], p[3])}, {'program body': {'write statement' : p[1]}})
 def p_statement_read(p):
-    '''statement : READ VAR RBRACKET '''
-    p[0] = {'read statement' : p[2]}
+    '''statement : READBR VAR RBRACKET 
+                 | READ LBRACKET VAR RBRACKET'''
+    if len(p) == 4:
+        p[0] = {'read statement' : p[2]}
+    elif len(p) == 5:
+        p[0] = {'read statement' : p[3]}
     top_statement[0] = p[0]
 def p_statement_while(p):
     '''statement : WHILE LBRACKET expression RBRACKET DO BEGIN programbody END'''
     p[0] = {'while statement' : ({'while condition' : p[3]}, {'while body' :  p[7]})}
     top_statement[0] = p[0]
 def p_statement_if(p):
-    '''statement : IF LBRACKET expression RBRACKET THEN BEGIN programbody END ELSE BEGIN programbody END
-    			 | UNLESS LBRACKET expression RBRACKET THEN BEGIN programbody END ELSE BEGIN programbody END'''
+    '''statement : IF LBRACKET expression RBRACKET THEN BEGIN programbody END ELSE BEGIN programbody END'''
+                 # | UNLESS LBRACKET expression RBRACKET THEN BEGIN programbody END ELSE BEGIN programbody END'''
     if p[1] == 'if':
-	    p[0] = {'if statement' : ({'if condition' : p[3]},  {'then body' : p[7]}, {'else body' : p[11]})}
-    else:
-	    p[0] = {'if statement' : ({'if condition' : {'NOT expression' : p[3]}},  {'then body' : p[7]}, {'else body' : p[11]})}
+        p[0] = {'if statement' : ({'if condition' : p[3]},  {'then body' : p[7]}, {'else body' : p[11]})}
+    # else:
+    #     p[0] = {'if statement' : ({'if condition' : {'NOT expression' : p[3]}},  {'then body' : p[7]}, {'else body' : p[11]})}
     top_statement[0] = p[0]
 
 def p_expression(p):
@@ -146,9 +167,9 @@ def p_expression_or(p):
     '''expression : expression OR expression'''
     p[0] = {'|| expression' : (p[1] , p[3])}
     
-def p_expression_not(p):
-    '''expression : NOT expression'''
-    p[0] = {'NOT expression' : (p[2])}
+# def p_expression_not(p):
+#     '''expression : NOT expression'''
+#     p[0] = {'NOT expression' : (p[2])}
     
 
 def p_expression_brackets(p):
@@ -180,6 +201,15 @@ def p_statement_plusassign(p):
 def p_statement_minusassign(p):
     '''statement : VAR MINUSASSIGN expression'''
     p[0] = {'assignment' : (p[1], {'- expression' : (p[1] , p[3])})}
+    top_statement[0] = p[0]
+
+def p_statement_andassign(p):
+    '''statement : VAR ANDASSIGN expression'''
+    p[0] = {'assignment' : (p[1], {'AND expression' : (p[1] , p[3])})}
+    top_statement[0] = p[0]
+def p_statement_orassign(p):
+    '''statement : VAR ORASSIGN expression'''
+    p[0] = {'assignment' : (p[1], {'OR expression' : (p[1] , p[3])})}
     top_statement[0] = p[0]
 
 
@@ -310,6 +340,10 @@ end
 \t\t\t\t\t+ expression:
 \t\t\t\t\t\tx
 \t\t\t\t\t\t1
+\t\treturn
+\t\t* expression:
+\t\t\tx
+\t\t\tx
 \tprogram:
 \t\tprogram body:
 \t\t\tif statement:
@@ -365,8 +399,8 @@ def main():
     # try:
     parser.parse(input=data, lexer=lexer)
     # except Exception:
-    # 	print "parsing terminated"
-    # 	return
+    #   print "parsing terminated"
+    #   return
     print_program(top_program[0])
 
 

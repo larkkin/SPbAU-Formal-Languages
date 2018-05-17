@@ -1,8 +1,8 @@
+f() <- begin False end;
 a := 2;
 b := a + 1;
 a **= b;
 b += a;
-a *= b;
-b -= (a / 2);
-a /= 2 * b;
-unless (a > 2) then begin b **= a end else begin skip end
+a ||= b;
+f();
+a >:= b

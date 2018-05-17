@@ -7,15 +7,17 @@ import re
 
 
 tokens = (
-    'IF', 'UNLESS', 'THEN', 'ELSE', 
-    'WHILE', 'DO', 
+    'IF', 'THEN', 'ELSE', 
+    'WHILE', 'DO',
     'READ', 'WRITE',
+    'READBR', 'WRITEBR',
     'BEGIN', 'END',
     'PLUS', 'MINUS', 'MULT', 'DIV', 'MOD', 'POW',
     'PLUSASSIGN', 'MINUSASSIGN', 'MULTASSIGN', 'DIVASSIGN', 'MODASSIGN', 'POWASSIGN',
     'EQ', 'NEQ',
     'GT', 'GE', 'LT', 'LE', 
-    'AND', 'OR', 'NOT',
+    'AND', 'OR',
+    'ANDASSIGN', 'ORASSIGN',
     'TRUE', 'FALSE',
     'SEMICOLON',
     'COMMA',
@@ -28,7 +30,8 @@ tokens = (
     'SKIP',
     'FUN',
     'FUNASSIGN',
-    'RETURN'
+    'RETURN',
+    'WRITEASSIGN'
 )
 
 def build_lexer():
@@ -42,15 +45,16 @@ def build_lexer():
 
     reserved = {
         r'if' : 'IF',
-        r'unless' : 'UNLESS',
         r'then' : 'THEN',
         r'else' : 'ELSE',
         r'true' : 'TRUE',
         r'false' : 'FALSE',
         r'while' : 'WHILE',
         r'do' : 'DO',
-        r'read(' : 'READ',
-        r'write(' : 'WRITE',
+        r'read(' : 'READBR',
+        r'write(' : 'WRITEBR',
+        r'read' : 'READ',
+        r'write' : 'WRITE',
         r'begin' : 'BEGIN',
         r'end' : 'END',
         r'return' : 'RETURN',
@@ -78,9 +82,11 @@ def build_lexer():
     t_LE  = r'<=';
     t_AND = r'&&';
     t_OR  = r'\|\|';
-    t_NOT  = r'!';
+    t_ANDASSIGN = r'&&=';
+    t_ORASSIGN  = r'\|\|=';
     t_ASSIGN  = r':=';
     t_FUNASSIGN = r'<-'
+    t_WRITEASSIGN = r'>:='
 
     t_SEMICOLON = r';';
     t_COMMA = r',';
